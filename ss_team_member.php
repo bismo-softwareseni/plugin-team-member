@@ -6,6 +6,8 @@
         Author: Bismoko Widyatno
     */
 
+    //-- import necessary files
+    include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
 
     /**
      * --------------------------------------------------------------------------
@@ -26,7 +28,9 @@
             add_action( 'init', array( $this, 'ssTmCreateCustomPostType' ) );
 
             //-- show metaboxes
-            add_filter( 'rwmb_meta_boxes', array( $this, 'ssTmCreateMetaBoxes' ) );
+            if( is_plugin_active( 'meta-box/meta-box.php' ) ) {
+                add_filter( 'rwmb_meta_boxes', array( $this, 'ssTmCreateMetaBoxes' ) );
+            }
 
             //-- register team member shortcode
             add_shortcode( 'ss_team_member', array( $this, 'ssTmCreateShortcode' ) );
@@ -106,8 +110,19 @@
         }
 
         //-- function to create shortcode for displaying the team member
-        function ssTmCreateShortcode() {
+        function ssTmCreateShortcode( $ss_shortcode_atts = array() ) {
             ob_start();
+
+            //-- normalize attribute keys to lowercase
+            $ss_shortcode_atts = array_change_key_case( (array)$ss_shortcode_atts, CASE_LOWER );
+
+            //-- override default shortcode parameter
+            $ss_team_member_show_info = shortcode_atts([
+                                            'to_show' => 'position',
+                                        ], $ss_shortcode_atts );
+            
+            //-- transform shortcode parameter into array
+            $ss_team_member_show_info[ 'to_show' ] = explode( ',', $ss_team_member_show_info[ 'to_show' ] );
 
             //-- get team members
             $ss_args = array(
@@ -143,7 +158,7 @@
                         
                         <!-- position -->
                         <?php
-                            if( !empty( $ss_team_members_meta[$this->ss_tm_prefix . 'position'][ 0 ] ) ) {
+                            if( !empty( $ss_team_members_meta[$this->ss_tm_prefix . 'position'][ 0 ] ) && in_array( 'position', $ss_team_member_show_info[ 'to_show' ] ) ) {
                         ?>
                             <h6 class="team-member-position"><?php echo $ss_team_members_meta[$this->ss_tm_prefix . 'position'][ 0 ]; ?></h6>
                         <?php
@@ -152,7 +167,7 @@
                         
                         <!-- phone -->
                         <?php
-                            if( !empty( $ss_team_members_meta[$this->ss_tm_prefix . 'phone'][ 0 ] ) ) {
+                            if( !empty( $ss_team_members_meta[$this->ss_tm_prefix . 'phone'][ 0 ] ) && in_array( 'phone', $ss_team_member_show_info[ 'to_show' ] ) ) {
                         ?>
                             <h6 class="team-member-phone"><?php echo $ss_team_members_meta[$this->ss_tm_prefix . 'phone'][ 0 ]; ?></h6>
                         <?php
@@ -162,7 +177,7 @@
                         
                         <!-- email -->
                         <?php
-                            if( !empty( $ss_team_members_meta[$this->ss_tm_prefix . 'email'][ 0 ] ) ) {
+                            if( !empty( $ss_team_members_meta[$this->ss_tm_prefix . 'email'][ 0 ] ) && in_array( 'email', $ss_team_member_show_info[ 'to_show' ] ) ) {
                         ?>
                             <h6 class="team-member-email"><?php echo $ss_team_members_meta[$this->ss_tm_prefix . 'email'][ 0 ]; ?></h6>
                         <?php
@@ -171,7 +186,7 @@
                         
                         <!-- website -->
                         <?php
-                            if( !empty( $ss_team_members_meta[$this->ss_tm_prefix . 'website'][ 0 ] ) ) {
+                            if( !empty( $ss_team_members_meta[$this->ss_tm_prefix . 'website'][ 0 ] ) && in_array( 'website', $ss_team_member_show_info[ 'to_show' ] ) ) {
                         ?>
                             <h6 class="team-member-position"><?php echo $ss_team_members_meta[$this->ss_tm_prefix . 'website'][ 0 ]; ?></h6>
                         <?php

@@ -111,6 +111,161 @@
             return $ss_meta_boxes;
         }
 
+        //-- function for creating metaboxes using WP Metabox
+        function ssTmCreateMetaBoxesWP() {
+            //-- add metabox
+            add_meta_box( 
+                'ss_team_member_metabox',
+                esc_html__( 'Other Information', 'ss_team_member' ),
+                array( $this, 'ssTmDisplayWpMetabox' ),
+                $this->ss_tm_post_type_name
+            );
+        }
+
+        //-- function for displaying WP metabox in the team member admin page
+        function ssTmDisplayWpMetabox() {
+            global $post;
+
+            //-- init meta data variable
+            $ss_team_member_data = array();
+
+            //-- nonce field to validate form request
+            wp_nonce_field( basename( __FILE__ ), 'ss_team_member' );
+
+            /**
+             * get team member meta data if its already entered
+             **/
+            
+            //-- position
+            if( empty( $ss_team_member_data[ 'position' ] ) ) {
+                $ss_team_member_data[ 'position' ] = get_post_meta( $post->ID, $this->ss_tm_prefix . 'position', true );
+            }
+
+            //-- email
+            if( empty( $ss_team_member_data[ 'email' ] ) ) {
+                $ss_team_member_data[ 'email' ] = get_post_meta( $post->ID, $this->ss_tm_prefix . 'email', true );
+            }
+
+            //-- phone
+            if( empty( $ss_team_member_data[ 'phone' ] ) ) {
+                $ss_team_member_data[ 'phone' ] = get_post_meta( $post->ID, $this->ss_tm_prefix . 'phone', true );
+            }
+
+            //-- website
+            if( empty( $ss_team_member_data[ 'website' ] ) ) {
+                $ss_team_member_data[ 'website' ] = get_post_meta( $post->ID, $this->ss_tm_prefix . 'website', true );
+            }
+
+            //-- image
+            if( empty( $ss_team_member_data[ 'image' ] ) ) {
+                $ss_team_member_data[ 'image' ] = get_post_meta( $post->ID, $this->ss_tm_prefix . 'image', true );
+            }
+    ?>
+            <!-- position -->
+            <div>
+                <label for="tm-position">Position</label>
+                <input type="text" id="tm-position" name="<?php echo $this->ss_tm_prefix . 'position'; ?>" value="<?php echo $ss_team_member_data[ 'position' ]; ?>" />
+            </div>
+            
+            <!-- email -->
+            <div>
+                <label for="tm-email">Email</label>
+                <input type="email" id="tm-email" name="<?php echo $this->ss_tm_prefix . 'email'; ?>" value="<?php echo $ss_team_member_data[ 'email' ]; ?>" />
+            </div>
+            
+            <!-- phone -->
+            <div>
+                <label for="tm-phone">Phone</label>
+                <input type="number" id="tm-phone" name="<?php echo $this->ss_tm_prefix . 'phone'; ?>" value="<?php echo $ss_team_member_data[ 'phone' ]; ?>" />
+            </div>
+            
+            <!-- website -->
+            <div>
+                <label for="tm-website">Website</label>
+                <input type="url" id="tm-website" name="<?php echo $this->ss_tm_prefix . 'website'; ?>" value="<?php echo $ss_team_member_data[ 'website' ]; ?>" />
+            </div>
+
+            <!-- image -->
+            <?php wp_enqueue_media(); ?>
+
+            <div class='image-preview-wrapper'>
+                <?php
+                    $ss_tm_image_src = 'https://via.placeholder.com/150';
+
+                    if( !empty( $ss_team_member_data[ 'image' ] ) ) {
+                        $ss_tm_image_src = wp_get_attachment_image_src( $ss_team_member_data[ 'image' ] )[ 0 ];
+                    }
+                ?>
+		        <img id='image-preview' src='<?php echo esc_url( $ss_tm_image_src ); ?>' width='100' height='100' style='max-height: 100px; width: 100px;'>
+	        </div>
+	        <input id="upload_image_button" type="button" class="button" value="<?php _e( 'Upload image' ); ?>" />
+	        <input type='hidden' name='<?php echo $this->ss_tm_prefix . 'image'; ?>' id='image_attachment_id' value=''>
+
+
+    <?php
+        }
+
+        //-- function for saving WP Metabox data
+        function ssTmSaveWpMetaboxData( $post_id, $post ) {
+            //-- create a variable to store the input
+            $ss_team_member_data = array();
+            $ss_team_member_data_error = array();
+
+            
+            //-- return if user doesn't have edit permission
+            if ( !current_user_can( 'edit_post', $post_id ) ) {
+                return $post_id;
+            }
+
+            //-- validating form
+            if ( isset( $_POST[ 'ss_team_member' ] ) && !wp_verify_nonce( $_POST[ 'ss_team_member' ], basename(__FILE__) ) ) {
+                return $post_id;
+            }
+
+            //-- sanitize forms
+            if( isset( $_POST[ $this->ss_tm_prefix . 'position' ] ) ) {
+                $ss_team_member_data[ $this->ss_tm_prefix . 'position' ] = sanitize_text_field( $_POST[ $this->ss_tm_prefix . 'position' ] );
+            }
+
+            if( isset( $_POST[ $this->ss_tm_prefix . 'email' ] ) ) {
+                $ss_team_member_data[ $this->ss_tm_prefix . 'email' ] = sanitize_email( $_POST[ $this->ss_tm_prefix . 'email' ] );
+            }
+
+            if( isset( $_POST[ $this->ss_tm_prefix . 'phone' ] ) ) {
+                $ss_team_member_data[ $this->ss_tm_prefix . 'phone' ] = sanitize_text_field( $_POST[ $this->ss_tm_prefix . 'phone' ] );
+            }
+
+            if( isset( $_POST[ $this->ss_tm_prefix . 'website' ] ) ) {
+                $ss_team_member_data[ $this->ss_tm_prefix . 'website' ] = sanitize_url( $_POST[ $this->ss_tm_prefix . 'website' ] );
+            }
+
+            if( isset( $_POST[ $this->ss_tm_prefix . 'image' ] ) ) {
+                $ss_team_member_data[ $this->ss_tm_prefix . 'image' ] = sanitize_text_field( $_POST[ $this->ss_tm_prefix . 'image' ] );
+            }
+
+            //-- store the data
+            foreach ( $ss_team_member_data as $key => $value ) :
+                //-- do not store custom data twice
+                if ( 'revision' === $post->post_type ) {
+                    return;
+                }
+
+                if ( get_post_meta( $post_id, $key, false ) ) {
+                    // If the custom field already has a value, update it.
+                    update_post_meta( $post_id, $key, $value );
+                } else {
+                    // If the custom field doesn't have a value, add it.
+                    add_post_meta( $post_id, $key, $value);
+                }
+                if ( !$value ) {
+                    // Delete the meta key if there's no value
+                    delete_post_meta( $post_id, $key );
+                }
+
+            endforeach;
+            
+        }
+
         //-- function to create shortcode for displaying the team member
         function ssTmCreateShortcode( $ss_shortcode_atts = array() ) {
             ob_start();
@@ -211,15 +366,80 @@
             return ob_get_clean();
         }
 
+        //-- function for including media upload scripts
+        function ssTmIncludeMediaUploadScript() {
+            $my_saved_attachment_post_id = get_option( 'media_selector_attachment_id', 0 );
+    ?>
+
+        <script type='text/javascript'>
+            jQuery( document ).ready( function( $ ) {
+                // Uploading files
+                var file_frame;
+                var wp_media_post_id = wp.media.model.settings.post.id; // Store the old id
+                var set_to_post_id = <?php echo $my_saved_attachment_post_id; ?>; // Set this
+                jQuery('#upload_image_button').on('click', function( event ){
+                    event.preventDefault();
+                    // If the media frame already exists, reopen it.
+                    if ( file_frame ) {
+                        // Set the post ID to what we want
+                        file_frame.uploader.uploader.param( 'post_id', set_to_post_id );
+                        // Open frame
+                        file_frame.open();
+                        return;
+                    } else {
+                        // Set the wp.media post id so the uploader grabs the ID we want when initialised
+                        wp.media.model.settings.post.id = set_to_post_id;
+                    }
+                    // Create the media frame.
+                    file_frame = wp.media.frames.file_frame = wp.media({
+                        title: 'Select a image to upload',
+                        button: {
+                            text: 'Use this image',
+                        },
+                        multiple: false	// Set to true to allow multiple files to be selected
+                    });
+                    // When an image is selected, run a callback.
+                    file_frame.on( 'select', function() {
+                        // We set multiple to false so only get one image from the uploader
+                        attachment = file_frame.state().get('selection').first().toJSON();
+                        // Do something with attachment.id and/or attachment.url here
+                        $( '#image-preview' ).attr( 'src', attachment.url ).css( 'width', 'auto' );
+                        $( '#image_attachment_id' ).val( attachment.id );
+                        // Restore the main post ID
+                        wp.media.model.settings.post.id = wp_media_post_id;
+                    });
+                        // Finally, open the modal
+                        file_frame.open();
+                });
+                // Restore the main ID when the add media button is pressed
+                jQuery( 'a.add_media' ).on( 'click', function() {
+                    wp.media.model.settings.post.id = wp_media_post_id;
+                });
+            });
+        </script>
+
+    <?php
+        }
+
         //-- function for executing some task when plugins loaded
         function ssTmPluginsLoadedHandlers() {
             //-- show metaboxes
             if( is_plugin_active( 'meta-box/meta-box.php' ) ) {
+                //-- using metabox io
                 add_filter( 'rwmb_meta_boxes', array( $this, 'ssTmCreateMetaBoxes' ) );
-            }
+            } else {
+                //-- using WP metabox
+                add_action( 'add_meta_boxes', array( $this, 'ssTmCreateMetaBoxesWP' ) );
 
+                //-- action to save WP metabox
+                add_action( 'save_post', array( $this, 'ssTmSaveWpMetaboxData' ), 1, 2 );
+            }
+    
             //-- register team member shortcode
             add_shortcode( 'ss_team_member', array( $this, 'ssTmCreateShortcode' ) );
+
+            //-- add media upload javascript
+            add_action( 'admin_footer', array( $this, 'ssTmIncludeMediaUploadScript' ) );
         }
     }
 

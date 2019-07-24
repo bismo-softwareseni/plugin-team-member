@@ -6,8 +6,11 @@
         Author: Bismoko Widyatno
     */
 
-    //-- import necessary files
-    include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+    //-- import necessary files for method is_plugin_active
+    if( !function_exists( 'is_plugin_active' ) ) {
+        include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+    }
+    
 
     /**
      * --------------------------------------------------------------------------
@@ -27,13 +30,12 @@
             //-- init custom post types
             add_action( 'init', array( $this, 'ssTmCreateCustomPostType' ) );
 
-            //-- show metaboxes
-            if( is_plugin_active( 'meta-box/meta-box.php' ) ) {
-                add_filter( 'rwmb_meta_boxes', array( $this, 'ssTmCreateMetaBoxes' ) );
-            }
-
-            //-- register team member shortcode
-            add_shortcode( 'ss_team_member', array( $this, 'ssTmCreateShortcode' ) );
+            /**
+             * execute this when plugin activated and have been loaded
+             * 1. show metaboxes
+             * 2. register team member shortcode
+             **/ 
+            add_action( 'plugins_loaded', array( $this, 'ssTmPluginsLoadedHandlers' ) );
         }
 
         //-- function to create custom post type
@@ -207,6 +209,17 @@
             }
 
             return ob_get_clean();
+        }
+
+        //-- function for executing some task when plugins loaded
+        function ssTmPluginsLoadedHandlers() {
+            //-- show metaboxes
+            if( is_plugin_active( 'meta-box/meta-box.php' ) ) {
+                add_filter( 'rwmb_meta_boxes', array( $this, 'ssTmCreateMetaBoxes' ) );
+            }
+
+            //-- register team member shortcode
+            add_shortcode( 'ss_team_member', array( $this, 'ssTmCreateShortcode' ) );
         }
     }
 

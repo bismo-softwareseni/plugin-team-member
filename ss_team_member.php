@@ -19,7 +19,7 @@
 
         function __construct() {
             //-- set prefix & custom post type name
-            $this->ss_tm_prefix = "ss_tm";
+            $this->ss_tm_prefix = "ss_tm_";
             $this->ss_tm_post_type_name = "ss_team_member";
 
             //-- init custom post types
@@ -109,7 +109,87 @@
         function ssTmCreateShortcode() {
             ob_start();
 
-            
+            //-- get team members
+            $ss_args = array(
+                'post_type'     => $this->ss_tm_post_type_name,
+                'post_status'   => 'publish',
+                'orderby'       => 'title',
+                'order'         => 'ASC'  
+            );
+
+            $ss_team_members = new WP_Query( $ss_args );
+
+            if( $ss_team_members->have_posts() ) {
+        ?>
+
+            <ul class="team-member-container">
+                <?php
+                    while( $ss_team_members->have_posts() ) :
+                        $ss_team_members->the_post();
+                        $ss_team_members_meta = get_post_meta( get_the_ID() );
+                ?>
+
+                    <li>
+                        <!-- image -->
+                        <?php
+                            if( !empty( $ss_team_members_meta[$this->ss_tm_prefix . 'image'][ 0 ] ) ) {
+                        ?>
+                            <img class="team-members-photo" src="<?php echo esc_url( wp_get_attachment_image_src( $ss_team_members_meta[$this->ss_tm_prefix . 'image'][ 0 ] )[ 0 ] ); ?>" />
+                        <?php
+                            }
+                        ?>
+                        
+                        <h4 class="team-member-name"><?php echo get_the_title(); ?></h4>
+                        
+                        <!-- position -->
+                        <?php
+                            if( !empty( $ss_team_members_meta[$this->ss_tm_prefix . 'position'][ 0 ] ) ) {
+                        ?>
+                            <h6 class="team-member-position"><?php echo $ss_team_members_meta[$this->ss_tm_prefix . 'position'][ 0 ]; ?></h6>
+                        <?php
+                            }
+                        ?>
+                        
+                        <!-- phone -->
+                        <?php
+                            if( !empty( $ss_team_members_meta[$this->ss_tm_prefix . 'phone'][ 0 ] ) ) {
+                        ?>
+                            <h6 class="team-member-phone"><?php echo $ss_team_members_meta[$this->ss_tm_prefix . 'phone'][ 0 ]; ?></h6>
+                        <?php
+                            }
+                        ?>
+                        
+                        
+                        <!-- email -->
+                        <?php
+                            if( !empty( $ss_team_members_meta[$this->ss_tm_prefix . 'email'][ 0 ] ) ) {
+                        ?>
+                            <h6 class="team-member-email"><?php echo $ss_team_members_meta[$this->ss_tm_prefix . 'email'][ 0 ]; ?></h6>
+                        <?php
+                            }
+                        ?>
+                        
+                        <!-- website -->
+                        <?php
+                            if( !empty( $ss_team_members_meta[$this->ss_tm_prefix . 'website'][ 0 ] ) ) {
+                        ?>
+                            <h6 class="team-member-position"><?php echo $ss_team_members_meta[$this->ss_tm_prefix . 'website'][ 0 ]; ?></h6>
+                        <?php
+                            }
+                        ?>
+                        
+                        <p class="team-member-profile"><?php echo get_the_content(); ?></p>
+                    </li>
+
+                <?php
+                    endwhile;
+                    //-- reset post data
+                    wp_reset_postdata();
+                ?>
+            </ul>
+
+        <?php
+            }
 
             return ob_get_clean();
         }

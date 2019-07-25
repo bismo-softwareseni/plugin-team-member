@@ -314,7 +314,11 @@
                             }
                         ?>
                         
-                        <h4 class="team-member-name"><?php echo get_the_title(); ?></h4>
+                        <!-- name could link to view team member details -->
+                        <a href="<?php echo get_permalink( get_the_ID() ); ?>">
+                            <h4 class="team-member-name"><?php echo get_the_title(); ?></h4>
+                        </a>
+                        <!-- end name -->
                         
                         <!-- position -->
                         <?php
